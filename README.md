@@ -60,12 +60,11 @@ php -m
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/laravel-url-shortener.git
+git clone https://github.com/mukulanand651-gif/laravel-url-shortener.git
 cd laravel-url-shortener
 composer install
 ```
 
-Replace `YOUR_USERNAME` with the real GitHub account before publishing this README. The repository must contain the complete Laravel project, including `artisan`, `composer.json`, `bootstrap/`, `config/`, application files, and migrations. **Do not commit `vendor/`.**
 
 ### 2. Create the database
 
