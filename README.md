@@ -9,7 +9,7 @@ A Laravel 12 + MySQL assessment project with **multiple companies**, company-sco
 | Requirement | Implementation |
 | --- | --- |
 | Multiple companies, multiple users each | `companies` table; `users.company_id`; unlimited companies |
-| User roles | Company roles `Admin`, `Member`; global `SuperAdmin` |
+| User roles | Company roles `Admin`, `Member`, `sale`, `Manager`; global `SuperAdmin` |
 | SuperAdmin seeded | `database/seeders/DatabaseSeeder.php` uses parameterized raw SQL |
 | Login / logout | Laravel session authentication |
 | SuperAdmin invites first Admin into **new company** | `/invite`: new company name + Admin invitation, created atomically |
