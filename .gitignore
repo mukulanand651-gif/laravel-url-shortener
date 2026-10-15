@@ -1,24 +1,44 @@
+# Laravel environment files
+.env
+.env.*
+!.env.example
+!.env.testing.example
+
+# Logs and temporary files
 *.log
 .DS_Store
-.env
-.env.backup
-.env.production
+Thumbs.db
 .phpactor.json
 .phpunit.result.cache
+/.phpunit.cache
+
+# IDE configuration
 /.fleet
 /.idea
 /.nova
-/.phpunit.cache
 /.vscode
 /.zed
-/auth.json
+
+# Dependencies
+/vendor
 /node_modules
+/auth.json
+
+# Laravel generated files
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
+/storage/logs/*
+/bootstrap/cache/*.php
+
+# Local database files and backups
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.bak
+
+# Server configuration
 Homestead.json
 Homestead.yaml
-Thumbs.db
