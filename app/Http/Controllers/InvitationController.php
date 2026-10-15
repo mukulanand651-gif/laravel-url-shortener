@@ -20,7 +20,7 @@ class InvitationController extends Controller
         abort_unless($actor->hasRole('SuperAdmin', 'Admin'), 403);
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'role' => ['required', Rule::in(['Admin', 'Member'])],
+            'role' => ['required', Rule::in(['Admin', 'Member', 'Sales', 'Manager'])],
             'company_id' => ['nullable', 'integer', 'exists:companies,id'],
             'new_company_name' => ['nullable', 'string', 'max:150'],
         ]);

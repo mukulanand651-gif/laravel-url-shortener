@@ -32,6 +32,50 @@ class AssessmentTest extends TestCase
             'original_url' => 'https://example.com/target'
         ]);
     }
+    public function test_sales_and_manager_are_invitable_into_admin_company(): void
+    {
+        $company = $this->company();
+        $admin = $this->user('Admin', $company);
+        foreach (['Sales', 'Manager'] as $role) {
+            $email = strtolower($role) . '@example.test';
+            $this->actingAs($admin)->post('/invite', [
+                'email' => $email,
+                'role' => $role,
+            ])->assertRedirect();
+            $this->assertDatabaseHas('invitations', [
+                'email' => $email,
+                'role' => $role,
+                'company_id' => $company->id,
+            ]);
+        }
+    }
+
+    public function test_sales_and_manager_read_permissions_without_creation_permission(): void
+    {
+        $a = $this->company();
+        $b = $this->company('Other company');
+        $sales = $this->user('Sales', $a);
+        $manager = $this->user('Manager', $a);
+        $own = $this->url($sales);
+        $sameCompany = $this->url($this->user('Member', $a));
+        $otherCompany = $this->url($this->user('Member', $b));
+
+        $this->actingAs($sales)->get('/urls')->assertOk()
+            ->assertSee($own->code)
+            ->assertDontSee($sameCompany->code)
+            ->assertDontSee($otherCompany->code);
+        $this->actingAs($manager)->get('/urls')->assertOk()
+            ->assertSee($own->code)
+            ->assertSee($sameCompany->code)
+            ->assertDontSee($otherCompany->code);
+
+        foreach ([$sales, $manager] as $user) {
+            $this->actingAs($user)->post('/urls', [
+                'original_url' => 'https://example.com/new',
+            ])->assertForbidden();
+        }
+    }
+
     public function test_multiple_companies_and_multiple_users_are_supported(): void
     {
         $a = $this->company();

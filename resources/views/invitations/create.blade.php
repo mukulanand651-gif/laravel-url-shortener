@@ -21,6 +21,8 @@
         <label>Role <select name="role">
                 <option value="Admin">Admin</option>
                 <option value="Member">Member</option>
+                <option value="Sales">Sales</option>
+                <option value="Manager">Manager</option>
             </select></label>
         <button>Create invitation link</button>
     </form>

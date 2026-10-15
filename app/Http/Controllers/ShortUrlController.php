@@ -11,10 +11,10 @@ class ShortUrlController extends Controller
         $user = $request->user();
         $query = ShortUrl::with(['user', 'company'])->latest();
         if ($user->hasRole('SuperAdmin')) {
-        } elseif ($user->hasRole('Admin')) {
+        } elseif ($user->hasRole('Admin', 'Manager')) {
             abort_unless($user->company_id, 403);
             $query->where('company_id', $user->company_id);
-        } elseif ($user->hasRole('Member')) {
+        } elseif ($user->hasRole('Member', 'Sales')) {
             abort_unless($user->company_id, 403);
             $query->where('company_id', $user->company_id)->where('user_id', $user->id);
         } else {
