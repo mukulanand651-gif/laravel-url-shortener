@@ -1,63 +1,31 @@
-# Laravel URL Shortener — Role-Based, Single-Company Service
+# Multi-Company Laravel URL Shortener
 
-A Laravel 12 and MySQL web application for creating private short URLs, with session authentication, company-scoped invitations, role-based permissions, and automated feature tests. The interface uses Laravel Blade, HTML, and CSS without a JavaScript frontend framework.
+A Laravel 12 + MySQL assessment project with **multiple companies**, company-scoped **Admin/Member** accounts, a platform **SuperAdmin**, invitation-based registration and **publicly resolving** short links. Blade, HTML and CSS provide the UI.
 
-> **Assessment interpretation:** Some sentences in the brief are contradictory. This implementation follows the literal restrictions listed under Authentication, Invitation, and URL Shortener. See [Assumptions and trade-offs](#assumptions-and-trade-offs) before evaluating the role behavior.
+> This revision replaces an earlier single-company implementation that followed incorrect transcribed requirements. The provided assignment screenshots explicitly require multiple companies, Admin/Member creators and **public** redirection.
 
-## Tech stack
+## Requirements coverage
 
-- PHP 8.2+, Laravel 12, Composer
-- MySQL (local development can use XAMPP's MySQL-compatible MariaDB server)
-- Laravel Blade, HTML, CSS
-- Laravel session authentication, Eloquent ORM, form validation, migrations, seeders, and feature tests
-- No external URL shortening API or third-party role library required
+| Requirement | Implementation |
+| --- | --- |
+| Multiple companies, multiple users each | `companies` table; `users.company_id`; unlimited companies |
+| User roles | Company roles `Admin`, `Member`; global `SuperAdmin` |
+| SuperAdmin seeded | `database/seeders/DatabaseSeeder.php` uses parameterized raw SQL |
+| Login / logout | Laravel session authentication |
+| SuperAdmin invites first Admin into **new company** | `/invite`: new company name + Admin invitation, created atomically |
+| Admin invites Admin or Member in own company | `/invite`; company is derived from authenticated Admin |
+| Admin/Member create short URL | Authenticated `POST /urls` |
+| SuperAdmin cannot create URL | Returns HTTP 403 |
+| SuperAdmin lists all companies' URLs | `GET /urls` no company filter |
+| Admin lists URLs created in own company | `GET /urls` filtered by company ID |
+| Member lists only own URLs | `GET /urls` filtered by company ID and creator ID |
+| Anyone can resolve a short URL | Public `GET /s/{code}` returns 302 to original, increments visits |
 
-## Key features
+## Requirements and installation
 
-- Login and logout with session authentication
-- Platform SuperAdmin created using a database seeder executing **parameterized raw SQL**
-- Database-level and application-level limit of **one company**; one company has multiple users
-- Five roles: `SuperAdmin`, `Admin`, `Member`, `Sales`, `Manager`
-- Role-restricted invitations with hashed, one-time, 48-hour-expiring tokens; users register with an invitation link
-- Short URL creation by Sales and Manager only; 10-character random codes unique in the database
-- Role-based URL listings; private `/s/{code}` routes redirect authorized users with HTTP 302
-- Visit counter and Laravel feature tests
-
-## Permission matrix
-
-| Action | SuperAdmin | Admin | Member | Sales | Manager |
-| --- | --- | --- | --- | --- | --- |
-| Sign in/out | Yes | Yes | Yes | Yes | Yes |
-| Create company | First company only | No | No | No | No |
-| Invite Admin to an **existing** company | Yes | No | No | No | No |
-| Invite Member | Yes | No | No | No | No |
-| Invite Sales / Manager | Yes | Yes (own company) | No | No | No |
-| Create short URL | **No** | **No** | **No** | Yes | Yes |
-| List short URLs | **403** | Only outside own company | Other creators in own company | Own-company URLs | Own-company URLs |
-| Resolve private link | No | Yes, own company | Yes, own company | Yes, own company | Yes, own company |
-
-**Consequences:** With only one company permitted, Admin's list is intentionally **empty** because there cannot be URLs outside their company. The Member list excludes URLs created by that Member; test fixtures can insert member-owned URLs even though the normal UI forbids Members from generating them.
-
-## Requirements
-
-Install:
-
-1. PHP 8.2 or later with `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, and required Laravel extensions
-2. Composer
-3. MySQL server and a MySQL user with permissions on the project database
-4. Git for cloning and contributing
-
-Check:
-
-```bash
-php -v
-composer --version
-php -m
-```
-
-## Local setup from GitHub
-
-### 1. Clone and install
+- PHP 8.2+, Composer, PHP `pdo_mysql`, `mbstring`, `openssl` extensions
+- MySQL 8 or a compatible MariaDB server (XAMPP works for local development)
+- Git
 
 ```bash
 git clone https://github.com/mukulanand651-gif/laravel-url-shortener.git
@@ -65,179 +33,115 @@ cd laravel-url-shortener
 composer install
 ```
 
+**Package contents:** This ZIP includes the Laravel application source, Laravel skeleton files, composer manifests, migrations, tests and documentation. It excludes `vendor/`, `.git/`, local `.env` files and secrets. Extract it, run `composer install`, and configure your environment as below. The GitHub clone instructions apply after you publish this updated version to the repository.
 
-### 2. Create the database
-
-In phpMyAdmin or the MySQL CLI, execute:
+### Create the MySQL development database
 
 ```sql
-CREATE DATABASE IF NOT EXISTS url_shortener
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS url_shortener CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 3. Configure the environment
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-On macOS/Linux:
-
-```bash
-cp .env.example .env
-```
-
-Set these values in `.env`:
+Copy `.env.example` to `.env` and set these values (use the actual local credentials):
 
 ```dotenv
-APP_NAME="Laravel URL Shortener"
+APP_NAME="Multi-Company URL Shortener"
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://127.0.0.1:8000
-
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=url_shortener
 DB_USERNAME=root
 DB_PASSWORD=
-
 CACHE_STORE=file
 SESSION_DRIVER=file
 QUEUE_CONNECTION=sync
-
 SEED_SUPERADMIN_EMAIL=superadmin@example.test
-SEED_SUPERADMIN_PASSWORD=replace-with-a-unique-strong-password
+SEED_SUPERADMIN_PASSWORD=change-this-to-your-own-long-password
 ```
 
-**Security:** The empty root password is a common *local XAMPP default*, not a production recommendation. Use a dedicated least-privileged MySQL user in other environments. Never commit your real `.env`, secrets, SQL dumps, or private invitation tokens.
-
-### 4. Generate key, migrate, seed
+Do not commit `.env` or use the example credentials in production.
 
 ```bash
 php artisan key:generate
 php artisan config:clear
 php artisan migrate
 php artisan db:seed
-```
-
-The seeder hashes the configured password and inserts the SuperAdmin with parameterized raw SQL. It is designed not to duplicate the account on subsequent runs. **Do not use `migrate:fresh` on a database with data you need to keep.**
-
-### 5. Launch
-
-```bash
 php artisan serve
 ```
 
-Open `http://127.0.0.1:8000/login`, authenticate with the seeded SuperAdmin credentials, and visit `/dashboard`.
+Visit `http://127.0.0.1:8000/login` and sign in using the configured seeded SuperAdmin account. The seeder is idempotent by email.
 
-If you use XAMPP, start **MySQL** in its control panel. Apache is not required for `php artisan serve`.
+## Demo workflow
 
-## First-time end-to-end workflow
+1. Sign in as SuperAdmin. Open **Invite**, enter a new company name, role **Admin**, and the first Admin's email. Submit and copy the link shown. This creates the new company and first Admin invitation in one transaction.
+2. Open the invitation in a private browser, complete name/password registration. The invitation expires after 48 hours and can only be used once.
+3. Log in as that Admin. Open **Invite** to add an **Admin** or **Member** to **their own company**.
+4. Log in as an Admin or Member, open **URLs**, enter `https://example.com` and click **Generate**. The app creates a random code.
+5. A Member sees **only their own URLs**. An Admin sees URLs from all creators in **their own company**. SuperAdmin sees URLs from **all companies**.
+6. Copy a generated `http://127.0.0.1:8000/s/{code}` link into a private (logged-out) browser window. It must redirect straight to the saved original URL, without asking for login.
+7. Repeat steps 1–6 with a second company to demonstrate isolation and global SuperAdmin visibility.
 
-1. **SuperAdmin signs in** with credentials set at seeding time. Open `/companies`, create the single company, then verify a second company is rejected.
-2. **SuperAdmin invites an Admin** to that *existing* company at `/invite`. Copy the generated invitation URL. The app displays a link to share; it **does not send an invitation email**.
-3. **Admin registers** by opening the invitation in a private browser window, entering their name/password, and accepting. Reusing the invitation should fail.
-4. **Admin signs in**, opens `/invite`, and invites Sales and Manager users. Attempts to invite another Admin or a Member are forbidden.
-5. **Sales (or Manager) signs in**, opens `/urls`, enters `https://example.com`, and generates a short code. The record appears in that role's URL listing.
-6. **Logged-out visitor tests the link:** `/s/{code}` redirects to login, not to the external URL.
-7. **Authorized company user tests the link:** `/s/{code}` responds with HTTP 302 and redirects to its stored original URL; visit count increases.
-8. **Member account** is invited by SuperAdmin. A Member can list other creators' URLs, but submitting a URL creation request is forbidden.
-9. **SuperAdmin visits `/urls`:** HTTP 403 is expected and correct.
+**Note:** Invitation emails are not actually sent. The app generates a copyable invitation link for manual sharing. The assessment does not require an email delivery provider.
 
 ## Main routes
 
-| Method | URI | Description |
-| --- | --- | --- |
-| GET, POST | `/login` | Login form / authenticate |
-| POST | `/logout` | End session |
-| GET | `/dashboard` | Authenticated dashboard |
-| GET, POST | `/companies` | SuperAdmin company view / single creation |
-| GET, POST | `/invite` | Invitation form / issue invitation |
-| GET, POST | `/invitations/{token}` | Accept invitation / register |
-| GET | `/urls` | Role-filtered list |
-| POST | `/urls` | Create URL (Sales, Manager only) |
-| GET | `/s/{code}` | Authenticated company-scoped redirect |
-
-All company, invitation, and short URL operations enforce authorization **on the server**, not just by hiding controls in the UI.
+| Method | Path | Authentication | Behavior |
+| --- | --- | --- | --- |
+| GET/POST | `/login` | Guest | Login |
+| POST | `/logout` | Signed in | Logout |
+| GET | `/dashboard` | Signed in | Role-aware dashboard |
+| GET/POST | `/companies` | SuperAdmin | List/create companies |
+| GET/POST | `/invite` | SuperAdmin/Admin | Invite first Admin/new company or invite into own company |
+| GET/POST | `/invitations/{token}` | Guest | Complete invitation registration |
+| GET | `/urls` | Signed in | Role-filtered list |
+| POST | `/urls` | Admin/Member | Create short link |
+| GET | `/s/{code}` | **Public** | Redirect to original URL |
 
 ## Data model
 
-- **companies:** `id`, `name`, unique `singleton_key`, timestamps. `singleton_key = 1` ensures no second company can be inserted even if simultaneous requests race.
-- **users:** base Laravel columns plus `role`, nullable `company_id` foreign key. Platform SuperAdmin has no company.
-- **invitations:** `company_id`, `invited_by`, `email`, `role`, unique SHA-256 `token_hash`, `expires_at`, nullable `accepted_at`, timestamps.
-- **short_urls:** `company_id`, `user_id` (creator), unique `code`, `original_url`, `visits`, timestamps.
-- **Laravel tables:** migrations, sessions, cache, queue-related tables as configured by the Laravel skeleton.
+- `companies`: id, name, timestamps. No single-company uniqueness restriction.
+- `users`: Laravel columns plus role and nullable company ID. SuperAdmin has a null company; Admin/Member belong to a company.
+- `invitations`: company ID, inviter, email, role, hashed token, expiry, accepted timestamp.
+- `short_urls`: code (unique), original URL, company ID, creator ID, visit counter.
 
-Relationships: Company has many Users, Invitations, and ShortUrls; User belongs to Company and creates ShortUrls; Invitation belongs to Company and records its inviter.
+## Automated feature tests (MySQL)
 
-## Project structure
+**Never run tests against your development database.** Tests use `RefreshDatabase` and can clear data.
 
-```text
-app/
-  Http/Controllers/
-    AuthController.php
-    CompanyController.php
-    InvitationController.php
-    ShortUrlController.php
-  Models/
-    Company.php
-    Invitation.php
-    ShortUrl.php
-    User.php
-database/
-  migrations/
-    0001_01_01_000000_create_users_table.php
-    0001_01_01_000001_create_cache_table.php
-    0001_01_01_000002_create_jobs_table.php
-    2026_01_01_000001_create_companies_table.php
-    2026_01_01_000002_add_company_role_to_users.php
-    2026_01_01_000003_create_invitations_table.php
-    2026_01_01_000004_create_short_urls_table.php
-  seeders/DatabaseSeeder.php
-resources/views/
-  auth/ companies/ invitations/ layouts/ urls/
-  dashboard.blade.php
-public/style.css
-routes/web.php
-tests/Feature/AssessmentTest.php
+Create a separate database:
+
+```sql
+CREATE DATABASE IF NOT EXISTS url_shortener_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Directory contents reflect the provided application implementation; a complete repository additionally contains the normal Laravel framework skeleton.
+Copy `.env.testing.example` to `.env.testing` and set your local MySQL credentials. Make sure that `phpunit.xml` targets `url_shortener_test`. Verify testing connection using `php artisan migrate:status --env=testing` (the first run may show missing migration table), or Tinker `DB::connection()->getDatabaseName()` under `--env=testing`.
 
-## Automated testing with MySQL
+```bash
+php artisan test --testsuite=Feature --filter=AssessmentTest
+```
 
-> **Warning:** Laravel tests using `RefreshDatabase` can change their configured database. Never run them against your regular `url_shortener` database containing valuable data.
+The test file covers multiple companies, Admin/Member creation, SuperAdmin create restriction/global visibility, company isolation, Member ownership filtering, publicly resolvable redirects, both invitation workflows, single-use/expiry checks, and login/logout.
 
+**Verification:** PHP syntax checks on the included PHP files were run when packaging. The revised Laravel feature suite has **not** been executed against a live MySQL database here; run it locally and record the results before submission. Results of the former single-company test suite **do not** validate this revised implementation.
 
+## Updating an earlier single-company installation
 
-For manual acceptance testing, check forbidden actions using both the UI and direct authenticated HTTP requests; a hidden button does not establish authorization.
+The ZIP includes `database/migrations/2026_01_01_000005_remove_single_company_constraint.php`. It removes the previous `singleton_key` unique column **if present**. For a fresh database, the new `create_companies_table` migration already omits it. Never use `migrate:fresh` on a database whose records you need to keep. Back up existing data first and run `php artisan migrate`.
 
-## Assumptions and trade-offs
-
-1. The brief says the service must **not have multiple companies**, yet refers to URL listings outside an Admin's company. This implementation strictly enforces one company; therefore the Admin outside-company list is empty. If the intended requirement was multi-tenancy, this design needs changing.
-2. The line “each user will neither be an Admin nor a Member” conflicts with the explicit five-role specification. This implementation includes both Admin and Member.
-3. The brief simultaneously calls for redirects and says short URLs should not be *publicly* resolvable. This implementation requires login for `/s/{code}`, then redirects authorized company users.
-4. Sales and Manager were chosen as URL creators because SuperAdmin, Admin, and Member are explicitly prohibited from creating URLs.
-5. Invitations generate copyable one-time links; email delivery is out of scope.
-6. This is an assessment implementation, not a production-hardened URL redirect platform. For production, review destination safety/SSRF-adjacent concerns, abuse prevention, rate limiting, audit logging, centralized authorization policies, and deployment security.
+Existing `Sales`/`Manager` users from the earlier incorrect implementation are outside the requested role model. Review and migrate their roles to `Admin` or `Member` according to actual business decisions; do not automatically alter them without approval.
 
 ## Troubleshooting
 
-| Issue | Check |
-| --- | --- |
-| `could not find driver` | Enable PHP `pdo_mysql` |
-| `Connection refused` | Start MySQL, check host and port |
-| `Table ... doesn't exist` | Run/inspect migrations against the configured MySQL DB |
-| `Table ... already exists` | Inspect migration history and duplicates; do **not** blindly run `migrate:fresh` |
-| Login works but `/urls` is 403 for SuperAdmin | Expected by design |
-| Admin URL listing empty | Expected in one-company interpretation |
-| Invitation link expired/reused | Issue a fresh invite |
-| Test database warning | Verify `.env.testing`, `phpunit.xml`, and `db:show --env=testing` |
+- Missing `pdo_mysql`: enable the extension for the PHP CLI.
+- Missing migration tables: confirm the MySQL database and migration files.
+- Duplicate tables: inspect the migrations tracking table rather than dropping production data.
+- 403 for Admin/Member creation: ensure you're running the revised controllers and signed into a company account.
+- Public redirects unexpectedly going to login: ensure `/s/{code}` is outside `Route::middleware('auth')` and clear routes using `php artisan optimize:clear`.
+- Test runner errors: check `tests/TestCase.php`, `tests/Feature/AssessmentTest.php`, `phpunit.xml` and test DB connectivity.
 
-## AI use and authorship disclosure
+## AI assistance and author contribution
 
-This assessment was developed with assistance from **ChatGPT** for debugging Laravel/MySQL errors, proposing and drafting README documentation.
+This project has involved substantial ChatGPT assistance,  feature tests and documentation, as well as debugging.
 

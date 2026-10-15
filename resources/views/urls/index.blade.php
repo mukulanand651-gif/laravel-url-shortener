@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
     <h1>Short URLs</h1>
-    @if(auth()->user()->hasRole('Sales', 'Manager'))
+    @if(auth()->user()->hasRole('Admin', 'Member'))
         <h2>Create a short URL</h2>
         <form method="post" action="{{ route('urls.store') }}">
             @csrf
@@ -29,8 +29,8 @@
                     <td>{{ $url->user->name }}</td>
                     <td>{{ $url->visits }}</td>
             </tr>@empty<tr>
-                <td colspan="5">No URLs found.</td>
-            </tr>
+                    <td colspan="5">No URLs found.</td>
+                </tr>
             @endforelse
         </tbody>
     </table>

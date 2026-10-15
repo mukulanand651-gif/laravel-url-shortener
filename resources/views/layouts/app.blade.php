@@ -13,7 +13,7 @@
         <nav>
             @auth
                 <a href="{{ route('dashboard') }}">Dashboard</a>
-                @if(!auth()->user()->hasRole('SuperAdmin'))<a href="{{ route('urls.index') }}">URLs</a>@endif
+                <a href="{{ route('urls.index') }}">URLs</a>
                 @if(auth()->user()->hasRole('SuperAdmin'))<a href="{{ route('companies.index') }}">Company</a>@endif
                 @if(auth()->user()->hasRole('SuperAdmin', 'Admin'))<a
                 href="{{ route('invitations.create') }}">Invite</a>@endif

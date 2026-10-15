@@ -1,4 +1,4 @@
-@extends('layouts.app') 
+@extends('layouts.app')
 @section('content')
     <h1>Accept invitation</h1>
     <p>You're joining as {{ $invitation->role }} ({{ $invitation->email }}).</p>

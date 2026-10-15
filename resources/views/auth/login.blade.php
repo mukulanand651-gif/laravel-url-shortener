@@ -1,4 +1,4 @@
-@extends('layouts.app') 
+@extends('layouts.app')
 @section('content')
     <h1>Sign in</h1>
     <form method="post" action="{{ route('login.submit') }}">
