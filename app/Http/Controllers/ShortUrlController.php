@@ -18,8 +18,7 @@ class ShortUrlController extends Controller
         $query = ShortUrl::query()->with(['user', 'company'])->latest();
 
         if ($user->hasRole('Admin')) {
-            // Exact literal requirement: URLs NOT created in the Admin's company.
-            // In single-company mode there can be none, by definition.
+           
             $query->where('company_id', '!=', $user->company_id);
         } elseif ($user->hasRole('Member')) {
             $query->where('company_id', $user->company_id)

@@ -37,7 +37,7 @@ class InvitationController extends Controller
             abort_if(isset($data['company_id']) && (int) $data['company_id'] !== (int) $actor->company_id, 403);
             $companyId = $actor->company_id;
         } else {
-            // A new-company invitation is not supported; the company must already exist.
+
             $companyId = $data['company_id'] ?? null;
             abort_unless($companyId, 422, 'Select the existing company first.');
         }
